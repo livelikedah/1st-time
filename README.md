@@ -1,4 +1,4 @@
-# 🔐 AI Security Analyzer
+    # 🔐 AI Security Analyzer
 
 A **fully autonomous AI-powered web application security scanner** built with React and TypeScript. Paste your JavaScript/TypeScript/Node.js code and get an instant, comprehensive security audit with vulnerability detection, severity ratings, fix suggestions, and improvement recommendations.
 
