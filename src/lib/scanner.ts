@@ -317,6 +317,19 @@ const RULES: ScanRule[] = [
     cwe: 'CWE-611',
     owasp: 'A05:2021',
   },
+  // GitHub Commit Verification
+  {
+    id: 'github-commit-verification',
+    name: 'GitHub Commit Verification Status Not Checked',
+    description: 'Fetching commits from the GitHub API without validating the commit verification status allows unverified or potentially spoofed commits to be treated as trusted. GitHub\'s vigilant mode marks all unsigned commits as "Unverified".',
+    severity: 'medium',
+    category: 'Supply Chain Security',
+    pattern: /(?:octokit(?:\.rest)?\.repos\.(?:listCommits|getCommit)\s*\(|['"`]https:\/\/api\.github\.com\/repos\/[^'"`\s]*\/commits|['"`]\/repos\/[^'"`\s]*\/commits)/g,
+    fix: 'After fetching commits from the GitHub API, always check the verification status: `if (!commit.commit.verification?.verified) { /* handle unverified commit */ }`. Enable vigilant mode in your GitHub settings (Settings → SSH and GPG keys → Vigilant mode) to flag all unsigned commits as "Unverified".',
+    references: ['https://docs.github.com/en/authentication/managing-commit-signature-verification/displaying-verification-statuses-for-all-of-your-commits'],
+    cwe: 'CWE-345',
+    owasp: 'A08:2021',
+  },
 ];
 
 // ─── Improvement Suggestions ───────────────────────────────────────────────────
@@ -411,6 +424,15 @@ const IMPROVEMENT_TEMPLATES: Improvement[] = [
     priority: 'high',
     example: `// In helmet.js\napp.use(helmet.hsts({\n  maxAge: 31536000, // 1 year in seconds\n  includeSubDomains: true,\n  preload: true,\n}));`,
     benefit: 'Prevents man-in-the-middle attacks via protocol downgrade and cookie theft over HTTP.',
+  },
+  {
+    id: 'imp-commit-signing',
+    title: 'Enable Commit Signing and GitHub Vigilant Mode',
+    description: 'Signing commits with a GPG or SSH key and enabling GitHub\'s vigilant mode ensures every commit displays a cryptographic verification status, making it easy to detect unsigned or potentially spoofed commits in your supply chain.',
+    category: 'Supply Chain Security',
+    priority: 'medium',
+    example: `# Configure Git to sign all commits with an SSH key\ngit config --global gpg.format ssh\ngit config --global user.signingkey ~/.ssh/id_ed25519.pub\ngit config --global commit.gpgsign true\n\n# Verify a commit signature programmatically (GitHub API)\nconst { data: commit } = await octokit.rest.repos.getCommit({ owner, repo, ref });\nif (!commit.commit.verification?.verified) {\n  throw new Error(\`Commit \${commit.sha} is not verified\`);\n}\n\n# Then enable Vigilant Mode in GitHub:\n# Settings → SSH and GPG keys → Vigilant mode\n# → Flag unsigned commits as unverified`,
+    benefit: 'Provides cryptographic proof of commit authorship. Vigilant mode displays Verified/Unverified badges on every commit, helping teams detect supply-chain tampering and unauthorized contributions.',
   },
 ];
 

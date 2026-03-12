@@ -116,6 +116,30 @@ describe('scanCode', () => {
     expect(vuln?.severity).toBe('high');
   });
 
+  it('detects GitHub API commit fetch without verification check (octokit)', () => {
+    const code = `const { data: commits } = await octokit.rest.repos.listCommits({ owner, repo });`;
+    const result = scanCode(code);
+    const vuln = result.vulnerabilities.find((v) => v.id.startsWith('github-commit-verification'));
+    expect(vuln).toBeDefined();
+    expect(vuln?.severity).toBe('medium');
+    expect(vuln?.category).toBe('Supply Chain Security');
+    expect(vuln?.cwe).toBe('CWE-345');
+  });
+
+  it('detects GitHub API commit fetch without verification check (fetch URL)', () => {
+    const code = `const res = await fetch('https://api.github.com/repos/owner/repo/commits');`;
+    const result = scanCode(code);
+    const vuln = result.vulnerabilities.find((v) => v.id.startsWith('github-commit-verification'));
+    expect(vuln).toBeDefined();
+  });
+
+  it('includes commit signing improvement suggestion', () => {
+    const result = scanCode('const x = 1;');
+    const imp = result.improvements.find((i) => i.id === 'imp-commit-signing');
+    expect(imp).toBeDefined();
+    expect(imp?.category).toBe('Supply Chain Security');
+  });
+
   it('computes lower score for more vulnerabilities', () => {
     const clean = scanCode('const x = 1;');
     const vulnerable = scanCode(SAMPLE_VULNERABLE_CODE);
